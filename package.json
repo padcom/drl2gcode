@@ -1,0 +1,41 @@
+{
+  "name": "drl2gcode",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "Matthias Hryniszak <padcom@gmail.com>",
+  "license": "MIT",
+  "description": "DRL to GCode converter",
+  "keywords": [
+    "drl",
+    "cnc"
+  ],
+  "files": [
+    "README.md",
+    "drl2gcode.mjs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/padcom/drl2gcode"
+  },
+  "bugs": {
+    "url": "https://github.com/padcom/drl2gcode/issues"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/padcom"
+  },
+  "bin": {
+    "mrdr": "drl2gcode.mjs"
+  },
+  "scripts": {
+    "build": "",
+    "version": "npm install && npm run build",
+    "prepublishOnly": "npm install && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9"
+  },
+  "dependencies": {
+    "commander": "^13.1.0"
+  }
+}
