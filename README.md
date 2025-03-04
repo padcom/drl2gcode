@@ -16,5 +16,7 @@ Options:
   -j, --jog-z <z-height>   Z height for initial and final jogging (default: 15)
   -m, --move-z <z-height>  Z height for jogging between points (default: 1)
   -d, --depth <depth>      Drilling depth (default: 2.5)
+  --offset-x <mm>          Offset points in X direction
+  --offset-y <mm>          Offset points in Y direction
   -h, --help               display help for command
 ```
