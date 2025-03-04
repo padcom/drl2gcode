@@ -2,7 +2,7 @@
 
 import { readFile, writeFile } from 'node:fs/promises'
 import { parse as parseFileName, format as formatFileName } from 'node:path'
-import { program } from 'commander'
+import { program, Option } from 'commander'
 import { existsSync } from 'node:fs'
 
 import pkg from './package.json' with { type: 'json' }
@@ -42,25 +42,29 @@ function parseDrl(content) {
 
     const item = RX_ITEM.exec(line)
     if (item && current) {
-      current.items.push({ x: item.groups.x, y: item.groups.y })
+      current.items.push({ x: parseFloat(item.groups.x), y: parseFloat(item.groups.y) })
     }
   }
 
   return result
 }
 
-function drlToGCode(batch, { units, feedrate, spindle, jogZ, moveZ, depth }) {
+function formatNumber(n) {
+  return (Math.round(n * 1000) / 1000).toString()
+}
+
+function drlToGCode(batch, { units, feedrate, spindle, jogZ, moveZ, depth, offsetX = 0, offsetY = 0 } = {}) {
   const gcode = []
-  gcode.push('; Generated using drl2gcode by Matthias Hryniszak')
+  gcode.push('; Generated using ' + pkg.name + ' by ' + pkg.author)
   gcode.push('G17     ; choose XpYp plane')
   gcode.push('G90     ; absolute positioning')
   if (units === 'METRIC') gcode.push('G21     ; metric units')
   else gcode.push('G20     ; imperial units')
   gcode.push(`G1 F${feedrate}  ; set feed rate to 10mm/min`)
-  gcode.push(`M03S${spindle} ; Start spindle clock-wise at ${spindle} RPM`)
+  gcode.push(`M03S${spindle} ; start spindle clock-wise at ${spindle} RPM`)
   gcode.push(`G0Z${jogZ}`)
   batch.items.forEach(item => {
-    gcode.push(`G0X${item.x}Y${item.y}`)
+    gcode.push(`G0X${formatNumber(item.x + offsetX)}Y${formatNumber(item.y + offsetY)}`)
     gcode.push(`G1Z-${depth}`)
     gcode.push(`G0Z${moveZ}`)
   })
@@ -72,7 +76,7 @@ function drlToGCode(batch, { units, feedrate, spindle, jogZ, moveZ, depth }) {
   return gcode.join('\n')
 }
 
-async function convert(drlFileName, { quiet, feedrate, spindle, jogZ, moveZ, depth }) {
+async function convert(drlFileName, { quiet, feedrate, spindle, jogZ, moveZ, depth, offsetX, offsetY }) {
   if (!drlFileName) {
     console.error('ERROR: no input file specified')
     process.exit(1)
@@ -91,7 +95,7 @@ async function convert(drlFileName, { quiet, feedrate, spindle, jogZ, moveZ, dep
       const parts = parseFileName(drlFileName)
       const outputFileName = formatFileName({ parts, name: parts.name + '-' + batch.id, ext: 'nc' })
       if (!quiet) process.stdout.write('Generating GCode for ' + batch.id + ' with diameter ' + batch.diameter + '... ')
-      const gcode = drlToGCode(batch, { units: drl.units, feedrate, spindle, jogZ, moveZ, depth })
+      const gcode = drlToGCode(batch, { units: drl.units, feedrate, spindle, jogZ, moveZ, depth, offsetX, offsetY })
       if (!quiet) process.stdout.write('Writing ' + outputFileName + '... ')
       await writeFile(outputFileName, gcode)
       if (!quiet) process.stdout.write('done\n')
@@ -112,5 +116,7 @@ program
   .option('-j, --jog-z <z-height>', 'Z height for initial and final jogging', 15)
   .option('-m, --move-z <z-height>', 'Z height for jogging between points', 1)
   .option('-d, --depth <depth>', 'Drilling depth', 2.5)
+  .addOption(new Option('--offset-x <mm>', 'Offset points in X direction').argParser(parseFloat))
+  .addOption(new Option('--offset-y <mm>', 'Offset points in Y direction').argParser(parseFloat))
   .action(convert)
   .parse(process.argv)
