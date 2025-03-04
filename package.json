@@ -1,6 +1,6 @@
 {
   "name": "drl2gcode",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "index.js",
   "author": "Matthias Hryniszak <padcom@gmail.com>",
   "license": "MIT",
